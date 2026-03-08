@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Diary</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="header">
+<h1>DIARY</h1>
+</div>
+
+<div class="navbar">
+<a href="index.php">HOME</a>
+<a href="year.php">YEAR</a>
+<a href="month.php">MONTH</a>
+<a href="expense.php">EXPENSE</a>
+<a href="diary.php">DIARY</a>
+<a href="profile.php">PROFILE</a>
+</div>
+
+
+<div class="diary-container">
+
+<h2 id="todayDate"></h2>
+
+<textarea id="diaryText" placeholder="Write your diary..."></textarea>
+
+<div class="diary-tools">
+
+<div id="dropZone">
+    📷 ลากรูปมาวางที่นี่
+</div>
+
+
+
+<button onclick="addEmoji('😊')">😊</button>
+<button onclick="addEmoji('😂')">😂</button>
+<button onclick="addEmoji('😍')">😍</button>
+<button onclick="addEmoji('😭')">😭</button>
+<button onclick="addEmoji('😴')">😴</button>
+
+<button onclick="saveDiary()">Save</button>
+
+</div>
+
+<div id="diaryList"></div>
+
+<h2>Timeline</h2>
+<div id="diaryTimeline"></div>
+
+</div>
+
+
+<script>
+const today = new Date();
+const dateKey = today.toISOString().slice(0,10);
+
+document.getElementById("todayDate").textContent =
+today.toLocaleDateString("th-TH");
+
+function addEmoji(e){
+
+document.getElementById("diaryText").value += e;
+
+}
+
+function saveDiary(){
+
+let text = document.getElementById("diaryText").value;
+let imageInput = droppedFile;
+let time = new Date().toLocaleTimeString("th-TH");
+
+if(!text && !droppedFile) return;
+
+let reader = new FileReader();
+let image = "";
+
+reader.onload = function(){
+image = reader.result;
+let data = JSON.parse(localStorage.getItem("diary")) || {};
+
+if(!data[dateKey]){
+data[dateKey] = [];
+}
+
+data[dateKey].push({
+text:text,
+image:image,
+time:time
+});
+
+localStorage.setItem("diary",JSON.stringify(data));
+
+location.reload();
+
+}
+
+if(droppedFile){
+reader.readAsDataURL(droppedFile);
+}else{
+reader.onload();
+}
+
+}
+
+function renderDiary(){
+
+let data = JSON.parse(localStorage.getItem("diary")) || {};
+
+let list = document.getElementById("diaryList");
+
+list.innerHTML="";
+
+if(!data[dateKey]) return;
+
+data[dateKey].forEach(d=>{
+
+let div = document.createElement("div");
+
+div.className="diary-entry";
+
+div.innerHTML=`
+<div>${d.time}</div>
+<div>${d.text}</div>
+${d.image ? `<img src="${d.image}" width="200">` : ""}
+`;
+
+list.appendChild(div);
+
+});
+
+}
+
+renderDiary();
+
+function renderTimeline(){
+
+let data = JSON.parse(localStorage.getItem("diary")) || {};
+
+let timeline = document.getElementById("diaryTimeline");
+
+timeline.innerHTML="";
+
+let dates = Object.keys(data).sort().reverse();
+
+dates.forEach(date=>{
+
+let dayBox = document.createElement("div");
+
+dayBox.className="timeline-day";
+
+dayBox.innerHTML = `<h3>${date}</h3>`;
+
+data[date].forEach((d,index)=>{
+
+let entry = document.createElement("div");
+
+entry.className="timeline-entry";
+
+entry.innerHTML = `
+<div>${d.time}</div>
+<div>${d.text}</div>
+${d.image ? `<img src="${d.image}" width="200">` : ""}
+<button onclick="deleteDiary('${date}',${index})">Delete</button>
+`;
+
+dayBox.appendChild(entry);
+
+});
+
+timeline.appendChild(dayBox);
+
+});
+
+}
+
+renderTimeline();
+
+function deleteDiary(date,index){
+
+let data = JSON.parse(localStorage.getItem("diary")) || {};
+
+data[date].splice(index,1);
+
+if(data[date].length === 0){
+delete data[date];
+}
+
+localStorage.setItem("diary",JSON.stringify(data));
+
+location.reload();
+
+}
+
+const dropZone = document.getElementById("dropZone");
+
+dropZone.addEventListener("dragover",(e)=>{
+
+e.preventDefault();
+dropZone.classList.add("dragover");
+
+});
+
+dropZone.addEventListener("dragleave",()=>{
+
+dropZone.classList.remove("dragover");
+
+});
+
+dropZone.addEventListener("drop",(e)=>{
+
+e.preventDefault();
+
+dropZone.classList.remove("dragover");
+
+droppedFile = e.dataTransfer.files[0];
+
+dropZone.textContent = "📷 Image added";
+
+});
+
+
+let droppedFile = null;
+
+
+</script>
+
+</body>
+</html>

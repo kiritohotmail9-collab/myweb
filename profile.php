@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>PROFILE</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="header">
+<h1>MY PROFILE</h1>
+</div>
+
+<div class="navbar">
+<a href="index.php">HOME</a>
+<a href="year.php">YEAR</a>
+<a href="month.php">MONTH</a>
+<a href="expense.php">EXPENSE</a>
+<a href="diary.php">DIARY</a>
+<a href="profile.php">PROFILE</a>
+</div>
+
+<div class="profile-container">
+
+<!-- PROFILE -->
+
+<div class="profile-card">
+
+<img id="profileImage" class="profile-img" src="">
+
+<input type="file" id="profileUpload">
+
+
+<div class="profile-info">
+
+<h2 id="profileName">Your Name</h2>
+
+<p>Age: <span id="profileAge"></span></p>
+
+<p>Birthday: <span id="profileBirthday"></span></p>
+
+<button class="edit-profile-btn" onclick="openProfileEdit()">Edit Profile</button>
+
+</div>
+
+</div>
+
+<div class="education-section">
+
+<div class="section-header">
+<h2>🎓 Education</h2>
+<button onclick="openEduPopup()">+ Add</button>
+</div>
+
+<div id="educationList"></div>
+
+</div>
+
+
+<!-- popup -->
+<div class="modal" id="eduModal">
+
+<div class="modal-box">
+
+<h3>Add Education</h3>
+
+<select id="eduLevel">
+<option value="">ระดับการศึกษา</option>
+<option>ประถม</option>
+<option>มัธยมต้น</option>
+<option>มัธยมปลาย</option>
+<option>ปวช</option>
+<option>ปวส</option>
+<option>ปริญญาตรี</option>
+<option>ปริญญาโท</option>
+<option>ปริญญาเอก</option>
+</select>
+
+<input id="eduSchool" placeholder="โรงเรียน / มหาวิทยาลัย">
+
+<input id="eduGpa" placeholder="เกรดเฉลี่ย">
+
+<input id="eduField" placeholder="สาขา / วิชาเอก">
+
+<div class="modal-buttons">
+<button onclick="saveEducation()">Save</button>
+<button onclick="closeEduPopup()">Cancel</button>
+</div>
+
+</div>
+</div>
+
+
+<!-- FAMILY -->
+
+<div class="family-section">
+
+<h2>Family</h2>
+
+<button class="btn"onclick="openFamilyEdit()">Add Member</button>
+
+<div id="familyGrid" class="family-grid"></div>
+
+</div>
+
+
+<!-- ALBUM -->
+
+<div class="album-section">
+
+<div class="album-header">
+
+<h2>Photo Album</h2>
+
+<div>
+
+<input type="file" id="albumUpload" multiple>
+
+<select id="albumMonthFilter" onchange="loadAlbum()"></select>
+
+</div>
+
+</div>
+
+<div id="albumGrid" class="album-grid"></div>
+
+</div>
+
+</div>
+
+
+<!-- popup edit profile -->
+
+<div id="profileModal" class="modal">
+
+<div class="modal-box">
+
+<h2>Edit Profile</h2>
+
+    <input id="editName" placeholder="Name">
+    <input id="editBirthday" type="date">
+    <input id="editEducation" placeholder="Education">
+
+<div class="modal-buttons">
+
+<button onclick="saveProfile()">Save</button>
+<button onclick="closeProfileEdit()">Cancel</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- popup viewer -->
+
+<div id="photoViewer" class="viewer">
+
+<img id="viewerImg">
+<button class="prev" onclick="prevPhoto()">❮</button>
+<button class="next" onclick="nextPhoto()">❯</button>
+
+<button onclick="closeViewer()">Close</button>
+
+</div>
+
+<div id="familyModal" class="modal">
+
+<div class="modal-box">
+
+<h2>Add Family Member</h2>
+
+<input id="familyName" placeholder="Name">
+
+<input id="familyRelation" placeholder="Relation (Father, Mother...)">
+
+<input id="familyBirthday" type="date">
+
+<input type="file" id="familyImage">
+
+<div class="modal-buttons">
+
+<button onclick="saveFamily()">Save</button>
+<button onclick="closeFamilyEdit()">Cancel</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="profile.js"></script>
+
+</body>
+</html>
