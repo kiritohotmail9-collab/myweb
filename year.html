@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>YEAR PLANNER</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Header -->
+    <div class="header">
+        <h1>MONTH PLANNER</h1>
+    </div>
+
+<div class="navbar">
+    <a href="index.html">HOME</a>
+    <a href="year.html">YEAR</a>
+    <a href="month.html">MONTH</a>
+    <a href="expense.html">EXPENSE</a>
+    <a href="diary.html">DIARY</a>
+    <a href="profile.html">PROFILE</a>
+</div>
+
+<!-- Modern Header -->
+<div class="modern-header">
+    <h1 class="year-display" id="yearText"></h1>
+</div>
+
+
+<div class="year-container" id="yearContainer"></div>
+
+<!-- ===== Modal ===== -->
+<div class="modal" id="taskModal">
+    <div class="modal-content">
+        <h3 id="modalDate"></h3>
+
+        <select id="taskType">
+            <option value="work">Work</option>
+            <option value="study">Study</option>
+            <option value="personal">Personal</option>
+        </select>
+
+        <textarea id="taskInput" placeholder="พิมพ์งานของคุณ..."></textarea>
+
+        <div class="modal-buttons">
+            <button class="btn" onclick="closeModal()">cancel</button>
+            <button class="btn primary" onclick="addTask()">Add</button>
+        </div>
+
+        <div id="taskList"></div>
+    </div>
+</div>
+
+<!-- ===== Year Modal ===== -->
+<div class="modal" id="yearModal">
+    <div class="modal-content small">
+        <h3>YEARS</h3>
+
+        <input type="number" id="yearInput" min="1900" max="2100">
+
+        <div class="modal-buttons">
+            <button class="btn" onclick="closeYearModal()">cancel</button>
+            <button class="btn primary" onclick="changeYear()">ok</button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+const months = [
+    "January","February","March","April",
+    "May","June","July","August",
+    "September","October","November","December"
+];
+
+let currentYear = new Date().getFullYear();
+const container = document.getElementById("yearContainer");
+const yearText = document.getElementById("yearText");
+let selectedKey = "";
+
+function getDaysInMonth(year, monthIndex) {
+    return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+function createYear() {
+
+    container.innerHTML = "";
+    yearText.textContent = currentYear;
+
+    months.forEach((month, monthIndex) => {
+
+        const monthSection = document.createElement("div");
+        monthSection.classList.add("month-section");
+
+        const title = document.createElement("div");
+        title.classList.add("month-title");
+        title.textContent = month;
+        monthSection.appendChild(title);
+
+        const calendar = document.createElement("div");
+        calendar.classList.add("calendar-grid");
+
+        const daysHeader = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+        daysHeader.forEach(day => {
+            const header = document.createElement("div");
+            header.classList.add("day-header");
+            header.textContent = day;
+            calendar.appendChild(header);
+        });
+
+        const totalDays = getDaysInMonth(currentYear, monthIndex);
+
+        for (let day = 1; day <= totalDays; day++) {
+
+            const dateKey = `${currentYear}-${monthIndex}-${day}`;
+            const cell = document.createElement("div");
+            cell.classList.add("day-box");
+
+            // 🔥 ไฮไลต์วันนี้
+            const today = new Date();
+            if (
+                day === today.getDate() &&
+                monthIndex === today.getMonth() &&
+                currentYear === today.getFullYear()
+            ) {
+                cell.classList.add("today");
+            }
+
+            const dateNumber = document.createElement("div");
+            dateNumber.classList.add("date-number");
+            dateNumber.textContent = day;
+            cell.appendChild(dateNumber);
+
+            const tasks = JSON.parse(localStorage.getItem(dateKey)) || [];
+
+            // 🔥 แสดงงาน + ทำ Drag ได้
+            tasks.forEach(task => {
+
+                const taskDiv = document.createElement("div");
+                taskDiv.classList.add("task-item", task.type);
+                taskDiv.textContent = task.text;
+
+                taskDiv.draggable = true;
+
+                taskDiv.addEventListener("dragstart", (e) => {
+                    e.stopPropagation();
+                    e.dataTransfer.setData("text/plain", JSON.stringify({
+                        task: task,
+                        fromKey: dateKey
+                    }));
+                });
+
+                cell.appendChild(taskDiv);
+            });
+
+            // เปิด modal
+            cell.addEventListener("click", () => openModal(month, day, monthIndex));
+
+            // 🔥 รองรับ Drop
+            cell.addEventListener("dragover", (e) => {
+                e.preventDefault();
+            });
+
+            cell.addEventListener("drop", (e) => {
+
+                e.preventDefault();
+
+                const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+                const targetKey = dateKey;
+
+                // ลบจากวันเดิม
+                let oldTasks = JSON.parse(localStorage.getItem(data.fromKey)) || [];
+                oldTasks = oldTasks.filter(t => t.text !== data.task.text);
+                localStorage.setItem(data.fromKey, JSON.stringify(oldTasks));
+
+                // เพิ่มไปวันใหม่
+                let newTasks = JSON.parse(localStorage.getItem(targetKey)) || [];
+                newTasks.push(data.task);
+                localStorage.setItem(targetKey, JSON.stringify(newTasks));
+
+                createYear();
+            });
+
+            calendar.appendChild(cell);
+        }
+
+        monthSection.appendChild(calendar);
+        container.appendChild(monthSection);
+    });
+}
+
+
+function openModal(month, day, monthIndex) {
+
+    selectedKey = `${currentYear}-${monthIndex}-${day}`;
+    document.getElementById("modalDate").textContent =
+        `${month} ${day}, ${currentYear}`;
+
+    renderTaskList();
+    document.getElementById("taskModal").classList.add("show");
+}
+
+function closeModal() {
+    document.getElementById("taskModal").classList.remove("show");
+}
+
+function addTask() {
+
+    const text = document.getElementById("taskInput").value.trim();
+    const type = document.getElementById("taskType").value;
+
+    if (!text) return;
+
+    const tasks = JSON.parse(localStorage.getItem(selectedKey)) || [];
+    tasks.push({ text, type });
+
+    localStorage.setItem(selectedKey, JSON.stringify(tasks));
+
+    document.getElementById("taskInput").value = "";
+    renderTaskList();
+    createYear();
+}
+
+function renderTaskList() {
+
+    const listDiv = document.getElementById("taskList");
+    listDiv.innerHTML = "";
+
+    const tasks = JSON.parse(localStorage.getItem(selectedKey)) || [];
+
+    tasks.forEach((task, index) => {
+
+        const item = document.createElement("div");
+        item.classList.add("task-item", task.type);
+        item.innerHTML = `
+            ${task.text}
+            <button onclick="deleteTask(${index})">✕</button>
+        `;
+
+        listDiv.appendChild(item);
+    });
+}
+
+function deleteTask(index) {
+
+    const tasks = JSON.parse(localStorage.getItem(selectedKey)) || [];
+    tasks.splice(index, 1);
+
+    localStorage.setItem(selectedKey, JSON.stringify(tasks));
+    renderTaskList();
+    createYear();
+}
+
+document.getElementById("taskModal").addEventListener("click", function(e) {
+    if (e.target === this) closeModal();
+});
+
+yearText.addEventListener("click", () => {
+    document.getElementById("yearInput").value = currentYear;
+    document.getElementById("yearModal").classList.add("show");
+});
+
+// ===== เปิด Year Modal เมื่อกดที่ปี =====
+yearText.addEventListener("click", () => {
+    document.getElementById("yearInput").value = currentYear;
+    document.getElementById("yearModal").classList.add("show");
+});
+
+function closeYearModal() {
+    document.getElementById("yearModal").classList.remove("show");
+}
+
+function changeYear() {
+
+    const newYear = parseInt(document.getElementById("yearInput").value);
+
+    if (!newYear || newYear < 1900 || newYear > 2100) {
+        alert("กรุณาใส่ปีที่ถูกต้อง");
+        return;
+    }
+
+    currentYear = newYear;
+
+    closeYearModal();
+    createYear();
+}
+
+
+createYear();
+
+
+</script>
+
+</body>
+</html>

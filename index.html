@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MY LHYTHM</title>
+
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+   <!-- Header -->
+   <div class="header">
+   <h1>MY LHYTHM</h1>
+   </div>
+
+   <!-- Navbar -->
+<div class="navbar">
+    <a href="index.html">HOME</a>
+    <a href="year.html">YEAR</a>
+    <a href="month.html">MONTH</a>
+    <a href="expense.html">EXPENSE</a>
+    <a href="diary.html">DIARY</a>
+    <a href="profile.html">PROFILE</a>
+</div>
+
+   <!-- Banner -->
+  <div class="banner">
+
+      <div class="slides" id="homeSlides"></div>
+
+      <button class="prev" onclick="prevSlide()">❮</button>
+      <button class="next" onclick="nextSlide()">❯</button>
+
+      <div class="dots" id="homeDots"></div>
+
+   </div>
+
+
+<div class="dashboard" >
+   <!-- Row 1 -->
+   <div class="dashboard-row">
+
+      <div class="today-todo-card">
+         <h2>📅 Today Tasks</h2>
+         <div id="todayTodoList"></div>
+      </div>
+
+      <div class="upcoming-todo-card">
+         <h2>🗓 Upcoming</h2>
+         <div id="upcomingTodoList"></div>
+      </div>
+
+      <div class="mini-calendar-card">
+         <h2>📆 Calendar</h2>
+         <div id="miniCalendar"></div>
+      </div>
+
+      <div class="expense-card">
+         <h2>💰 Expense</h2>
+         <canvas id="expensePie"></canvas>
+      </div>
+
+   </div>
+
+       
+   <div class="home-diary">
+      <h3>📔 Today Diary</h3>
+      <div id="todayDiary"></div>
+   </div>
+
+</div>
+
+
+
+<script>
+
+function loadTodayTasks(){
+
+const today = new Date()
+const key = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`
+const tasks = JSON.parse(localStorage.getItem(key)) || []
+const container = document.getElementById("todayTodoList")
+container.innerHTML = ""
+
+   if(tasks.length === 0){
+
+   container.innerHTML = "<p>ไม่มีงานวันนี้ 🎉</p>"
+   return
+
+   }
+
+tasks.forEach(task=>{
+
+const div = document.createElement("div")
+
+div.classList.add("today-task",task.type)
+
+if(task.done){
+div.classList.add("done")
+}
+
+div.textContent = task.text
+
+container.appendChild(div)
+
+})
+
+}
+
+loadTodayTasks()
+
+function loadUpcomingTasks(){
+
+const today = new Date()
+
+const container = document.getElementById("upcomingTodoList")
+
+container.innerHTML = ""
+
+let upcoming = []
+
+for(let i=0;i<localStorage.length;i++){
+
+let key = localStorage.key(i)
+
+/* ตรวจเฉพาะ key ที่เป็นวันที่ */
+if(!key.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) continue
+
+let date = new Date(key)
+
+if(date > today){
+
+let tasks = JSON.parse(localStorage.getItem(key)) || []
+
+tasks.forEach(task=>{
+
+upcoming.push({
+date:key,
+text:task.text,
+type:task.type,
+done:task.done
+})
+
+})
+
+}
+
+}
+
+/* เรียงจากใกล้สุด */
+upcoming.sort((a,b)=> new Date(a.date)-new Date(b.date))
+
+if(upcoming.length === 0){
+
+container.innerHTML = "<p>ไม่มีแผนล่วงหน้า</p>"
+return
+
+}
+
+upcoming.slice(0,5).forEach(task=>{
+
+const div = document.createElement("div")
+
+div.classList.add("today-task",task.type)
+
+if(task.done){
+div.classList.add("done")
+}
+
+div.textContent = `${task.date} - ${task.text}`
+
+container.appendChild(div)
+
+})
+
+}
+
+loadUpcomingTasks()
+
+
+function loadUpcomingPlans(){
+
+const container = document.getElementById("upcomingTodoList")
+container.innerHTML=""
+
+const today = new Date()
+today.setHours(0,0,0,0)
+
+let plans=[]
+
+for(let i=0;i<localStorage.length;i++){
+
+let key = localStorage.key(i)
+
+/* ตรวจ key เป็น date */
+if(!/^\d{4}-\d{1,2}-\d{1,2}$/.test(key)) continue
+
+let parts = key.split("-")
+
+let year = parseInt(parts[0])
+let month = parseInt(parts[1])   // เดือนแบบ 0-11
+let day = parseInt(parts[2])
+
+let date = new Date(year,month,day)
+
+if(date > today){
+
+let tasks = JSON.parse(localStorage.getItem(key)) || []
+
+tasks.forEach(task=>{
+
+plans.push({
+date:date,
+text:task.text,
+type:task.type || ""
+})
+
+})
+
+}
+
+}
+
+/* เรียงจากวันใกล้สุด */
+plans.sort((a,b)=> a.date - b.date)
+
+if(plans.length===0){
+
+container.innerHTML="<p>ไม่มีแผนล่วงหน้า</p>"
+return
+
+}
+
+plans.slice(0,7).forEach(plan=>{
+
+let y = plan.date.getFullYear()
+let m = plan.date.getMonth()+1
+let d = plan.date.getDate()
+
+const div = document.createElement("div")
+
+div.className="today-task "+plan.type
+
+div.textContent =
+plan.date.toLocaleDateString("th-TH") + " - " + plan.text
+
+container.appendChild(div)
+
+})
+
+}
+
+loadUpcomingPlans()
+
+
+function createMiniCalendar(){
+
+const container = document.getElementById("miniCalendar")
+
+const now = new Date()
+const year = now.getFullYear()
+const month = now.getMonth()
+
+const today = now.getDate()
+
+const firstDay = new Date(year,month,1).getDay()
+const days = new Date(year,month+1,0).getDate()
+
+let html = "<div class='mini-grid'>"
+
+/* หัววัน */
+const daysHeader = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]
+
+daysHeader.forEach(d=>{
+html += `<div class="mini-header">${d}</div>`
+})
+
+/* ช่องว่างก่อนวันแรก */
+for(let i=0;i<firstDay;i++){
+html += `<div></div>`
+}
+
+/* วัน */
+for(let i=1;i<=days;i++){
+
+const key = `${year}-${month}-${i}`
+
+const tasks = JSON.parse(localStorage.getItem(key)) || []
+
+const hasTask = tasks.length>0
+
+let todayClass = (i===today) ? "mini-today" : ""
+
+html += `
+<div class="mini-day ${todayClass}" onclick="openMonth(${year},${month},${i})">
+${i}
+${hasTask ? "<span class='mini-dot'></span>" : ""}
+</div>
+`
+
+}
+
+html += "</div>"
+container.innerHTML = html
+
+}
+
+createMiniCalendar()
+
+
+function createExpenseChart(){
+
+let data = JSON.parse(localStorage.getItem("expenses")) || []
+
+let income = 0
+let expense = 0
+
+data.forEach(item=>{
+if(item.type==="income") income += item.amount
+if(item.type==="expense") expense += item.amount
+})
+
+const ctx = document.getElementById("expensePie").getContext("2d")
+
+new Chart(ctx,{
+type:"pie",
+data:{
+labels:["Income","Expense"],
+datasets:[{
+data:[income,expense],
+backgroundColor:[
+"#4CAF50",
+"#ff6b6b"
+]
+}]
+}
+})
+
+}
+
+createExpenseChart()
+
+
+function openMonth(year,month,day){
+
+localStorage.setItem("openMonth",month)
+localStorage.setItem("openDay",day)
+
+window.location.href="month.php"
+
+}
+
+function loadTodayDiary(){
+
+let today = new Date().toISOString().slice(0,10);
+
+let data = JSON.parse(localStorage.getItem("diary")) || {};
+
+let box = document.getElementById("todayDiary");
+
+box.innerHTML="";
+
+if(!data[today]){
+
+box.textContent="No diary today";
+
+return;
+
+}
+
+data[today].forEach(d=>{
+
+let div = document.createElement("div");
+
+div.innerHTML = `
+<div>${d.time}</div>
+<div>${d.text}</div>
+${d.image ? `<img src="${d.image}" width="120">` : ""}
+`;
+
+
+box.appendChild(div);
+
+});
+
+}
+
+loadTodayDiary();
+
+</script>
+
+<script src="homeBanner.js"></script>
+
+</body>
+</html>
